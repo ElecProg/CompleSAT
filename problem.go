@@ -30,16 +30,28 @@ func NewProblem() Problem {
 // AddClause adds a clause to the problem, updating the Variables and Clauses maps
 // this does not update Unsatisfiable, would be fun if it would be that easy though...
 func (p *Problem) AddClause(clause []int) {
-	// The new contraint's id is
-	id := len(p.Clauses) + 1
-	p.Clauses[id] = map[int]bool{}
-
-	// Add the constraint itself
+	// Build a set of the variables in the clause
+	// checking for tautologies.
+	cl := map[int]bool{}
 	for _, vr := range clause {
-		// To the clause
-		p.Clauses[id][vr] = true
+		if cl[-vr] {
+			// Other phase of variable already in clause
+			// we have a tautology
+			return
+		}
 
-		// And to the Variables list
+		// Else add the variable to the clause
+		cl[vr] = true
+	}
+
+	// No tautologies found
+	// Add the contraint to the Clauses
+	id := len(p.Clauses) + 1
+	p.Clauses[id] = cl
+
+	// Add the constraint to the variables
+	for vr := range cl {
+		// New variable phase?
 		_, exists := p.Variables[vr]
 		if !exists {
 			p.Variables[vr] = map[int]bool{}
@@ -56,12 +68,7 @@ func (p Problem) Assign(variable int) Problem {
 	np := p.Copy()
 
 	// Save the variables assignment
-	if variable > 0 {
-		np.Assignment[variable] = true
-
-	} else {
-		np.Assignment[-variable] = false
-	}
+	np.Assignment[abs(variable)] = variable > 0
 
 	// Remove all instances of this phase
 	// If the clause contains the current assignment, we remove the clause.
