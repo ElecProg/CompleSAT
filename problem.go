@@ -5,10 +5,10 @@ package main
 type Problem struct {
 	// Mapping from a clause to a list of it's variables,
 	// if the variable is positive/negative it expects true/false
-	Clauses map[int]map[int]bool
+	Clauses map[uint]map[int]bool
 
 	// Mapping from a variable phase to the clauses containing it
-	Variables map[int]map[int]bool
+	Variables map[int]map[uint]bool
 
 	// Mapping of a variable to it's current assignment
 	Assignment map[int]bool
@@ -20,8 +20,8 @@ type Problem struct {
 // NewProblem creates a new problem
 func NewProblem() Problem {
 	return Problem{
-		Clauses:       map[int]map[int]bool{},
-		Variables:     map[int]map[int]bool{},
+		Clauses:       map[uint]map[int]bool{},
+		Variables:     map[int]map[uint]bool{},
 		Assignment:    map[int]bool{},
 		Unsatisfiable: false,
 	}
@@ -46,7 +46,7 @@ func (p *Problem) AddClause(clause []int) {
 
 	// No tautologies found
 	// Add the contraint to the Clauses
-	id := len(p.Clauses) + 1
+	id := uint(len(p.Clauses) + 1)
 	p.Clauses[id] = cl
 
 	// Add the constraint to the variables
@@ -54,7 +54,7 @@ func (p *Problem) AddClause(clause []int) {
 		// New variable phase?
 		_, exists := p.Variables[vr]
 		if !exists {
-			p.Variables[vr] = map[int]bool{}
+			p.Variables[vr] = map[uint]bool{}
 		}
 
 		p.Variables[vr][id] = true
@@ -134,7 +134,7 @@ func (p Problem) Copy() Problem {
 	}
 
 	for vr, clauses := range p.Variables {
-		np.Variables[vr] = map[int]bool{}
+		np.Variables[vr] = map[uint]bool{}
 
 		for clause := range clauses {
 			np.Variables[vr][clause] = true
