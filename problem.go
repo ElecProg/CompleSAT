@@ -83,7 +83,14 @@ func (p Problem) Assign(variable int) Problem {
 		// We make the clause true so:
 		// Delete all references to this clause...
 		for vr := range np.Clauses[clause] {
-			delete(np.Variables[vr], clause)
+			// If the variable phase only appeared here,
+			// remove the variable phase
+			if len(np.Variables[vr]) == 1 {
+				delete(np.Variables, vr)
+
+			} else {
+				delete(np.Variables[vr], clause)
+			}
 		}
 
 		// ...and delete the clause itself
