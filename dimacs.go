@@ -64,7 +64,14 @@ func readDimacsCnfFile(path string) (Problem, error) {
 			return Problem{}, err
 		}
 
-		line += " " + scanner.Text()
+		segment := scanner.Text()
+
+		// Skip comments
+		if strings.HasPrefix(segment, "c") {
+			continue
+		}
+
+		line += " " + segment
 		line = strings.TrimSpace(line)
 
 		if !strings.HasSuffix(line, " 0") {
@@ -72,6 +79,11 @@ func readDimacsCnfFile(path string) (Problem, error) {
 		}
 
 		line = strings.TrimSpace(strings.TrimSuffix(line, " 0"))
+
+		if line == "%" {
+			// End of file marker, seen in some files
+			break
+		}
 
 		readClauses++
 
@@ -84,7 +96,7 @@ func readDimacsCnfFile(path string) (Problem, error) {
 		for _, v := range strings.Fields(line) {
 			vr, err := strconv.Atoi(v)
 
-			if err != nil || vr > numVars {
+			if err != nil || vr > numVars || vr == 0 {
 				return Problem{}, errors.New("invalid constraint " + line)
 			}
 
