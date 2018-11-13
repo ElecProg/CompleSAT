@@ -14,10 +14,9 @@ func ChooseVariable(problem *Problem) int {
 }
 
 // Solve is the solver itself
-func Solve(problem Problem) Problem {
+func Solve(problem *Problem) *Problem {
 	// This is a wrapper around solve to provide memory safety to the end user
-	copyOfProblem := problem.Copy()
-	return *solve(&copyOfProblem)
+	return solve(problem.Copy())
 }
 
 // Solve is actually the real solver
@@ -54,7 +53,7 @@ func solve(problem *Problem) *Problem {
 	firstTry := problem.Copy()
 
 	firstTry.Assign(vr)
-	res := solve(&firstTry)
+	res := solve(firstTry)
 
 	if !res.Unsatisfiable {
 		return res

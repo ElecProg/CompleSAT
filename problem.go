@@ -18,8 +18,8 @@ type Problem struct {
 }
 
 // NewProblem creates a new problem
-func NewProblem() Problem {
-	return Problem{
+func NewProblem() *Problem {
+	return &Problem{
 		Clauses:       map[uint]map[int]bool{},
 		Variables:     map[int]map[uint]bool{},
 		Assigned:      map[int]bool{},
@@ -29,28 +29,23 @@ func NewProblem() Problem {
 
 // AddClause adds a clause to the problem, updating the Variables and Clauses maps
 // this does not update Unsatisfiable, would be fun if it would be that easy though...
-func (p *Problem) AddClause(clause []int) {
-	// Build a set of the variables in the clause
-	// checking for tautologies.
-	cl := map[int]bool{}
-	for _, vr := range clause {
-		if cl[-vr] {
+func (p *Problem) AddClause(clause map[int]bool) {
+	// Check for tautologies.
+	for vr := range clause {
+		if clause[-vr] {
 			// Other phase of variable already in clause
 			// we have a tautology
 			return
 		}
-
-		// Else add the variable to the clause
-		cl[vr] = true
 	}
 
 	// No tautologies found
 	// Add the contraint to the Clauses
 	id := uint(len(p.Clauses) + 1)
-	p.Clauses[id] = cl
+	p.Clauses[id] = clause
 
 	// Add the constraint to the variables
-	for vr := range cl {
+	for vr := range clause {
 		// New variable phase?
 		_, exists := p.Variables[vr]
 		if !exists {
@@ -118,7 +113,7 @@ func (p *Problem) Assign(variable int) {
 }
 
 // Copy creates a copy of the Problem
-func (p Problem) Copy() Problem {
+func (p *Problem) Copy() *Problem {
 	np := NewProblem()
 
 	for clause, vars := range p.Clauses {

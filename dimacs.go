@@ -8,13 +8,13 @@ import (
 	"strings"
 )
 
-func readDimacsCnfFile(path string) (Problem, error) {
+func readDimacsCnfFile(path string) (*Problem, error) {
 	file, err := os.Open(path)
 
 	defer file.Close()
 
 	if err != nil {
-		return Problem{}, err
+		return nil, err
 	}
 
 	scanner := bufio.NewScanner(file)
@@ -25,7 +25,7 @@ func readDimacsCnfFile(path string) (Problem, error) {
 	// Read header
 	for scanner.Scan() {
 		if scanner.Err() != nil {
-			return Problem{}, err
+			return nil, err
 		}
 
 		line := scanner.Text()
@@ -36,14 +36,14 @@ func readDimacsCnfFile(path string) (Problem, error) {
 			numVars, err = strconv.Atoi(strings.Fields(line)[2])
 
 			if err != nil {
-				return Problem{}, errors.New("unknown line type '" + line + "'")
+				return nil, errors.New("unknown line type '" + line + "'")
 			}
 
 			// And constraints
 			numClauses, err = strconv.Atoi(strings.Fields(line)[3])
 
 			if err != nil {
-				return Problem{}, errors.New("unknown line type '" + line + "'")
+				return nil, errors.New("unknown line type '" + line + "'")
 			}
 
 			// Done reading header
@@ -53,7 +53,7 @@ func readDimacsCnfFile(path string) (Problem, error) {
 			// Skip comments and empty lines
 
 		} else {
-			return Problem{}, errors.New("unknown line type '" + line + "'")
+			return nil, errors.New("unknown line type '" + line + "'")
 		}
 	}
 
@@ -61,7 +61,7 @@ func readDimacsCnfFile(path string) (Problem, error) {
 	readClauses, line := 0, ""
 	for scanner.Scan() {
 		if scanner.Err() != nil {
-			return Problem{}, err
+			return nil, err
 		}
 
 		segment := scanner.Text()
@@ -88,19 +88,19 @@ func readDimacsCnfFile(path string) (Problem, error) {
 		readClauses++
 
 		if readClauses > numClauses {
-			return Problem{}, errors.New("too many clauses in file")
+			return nil, errors.New("too many clauses in file")
 		}
 
-		clause := []int{}
+		clause := map[int]bool{}
 
 		for _, v := range strings.Fields(line) {
 			vr, err := strconv.Atoi(v)
 
 			if err != nil || vr > numVars || vr == 0 {
-				return Problem{}, errors.New("invalid constraint " + line)
+				return nil, errors.New("invalid constraint " + line)
 			}
 
-			clause = append(clause, vr)
+			clause[vr] = true
 		}
 
 		// Add clause and reset line
@@ -110,7 +110,7 @@ func readDimacsCnfFile(path string) (Problem, error) {
 
 	// Check if the ammount of clauses is correct
 	if readClauses != numClauses {
-		return Problem{}, errors.New("too few clauses in file")
+		return nil, errors.New("too few clauses in file")
 	}
 
 	return problem, nil
