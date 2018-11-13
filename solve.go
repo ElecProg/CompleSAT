@@ -1,7 +1,7 @@
 package main
 
 // ChooseVariable selects a variable which is currently most promissing
-func ChooseVariable(problem Problem) int {
+func ChooseVariable(problem *Problem) int {
 	// Find the variable phase affecting the most clauses
 	bestVariable, bestClauses := 0, 0
 	for variable, clauses := range problem.Variables {
@@ -16,11 +16,12 @@ func ChooseVariable(problem Problem) int {
 // Solve is the solver itself
 func Solve(problem Problem) Problem {
 	// This is a wrapper around solve to provide memory safety to the end user
-	return solve(problem.Copy())
+	copyOfProblem := problem.Copy()
+	return *solve(&copyOfProblem)
 }
 
 // Solve is actually the real solver
-func solve(problem Problem) Problem {
+func solve(problem *Problem) *Problem {
 	// No need to create copy of problem, the caller should have done that.
 
 	// Literal elimination
@@ -53,13 +54,13 @@ func solve(problem Problem) Problem {
 	firstTry := problem.Copy()
 
 	firstTry.Assign(vr)
-	res := Solve(firstTry)
+	res := solve(&firstTry)
 
 	if !res.Unsatisfiable {
 		return res
 	}
 
-	// No need to create a copy, we'll never use problem again
+	// No need to create a copy, we'll never use problem again.
 	problem.Assign(-vr)
-	return Solve(problem)
+	return solve(problem)
 }
