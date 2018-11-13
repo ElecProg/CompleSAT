@@ -29,10 +29,8 @@ func main() {
 	} else {
 		fmt.Println("SAT")
 
-		for i := 1; i <= len(solution.Assignment); i++ {
-			vl := solution.Assignment[i]
-
-			if vl {
+		for i := 1; i <= len(solution.Assigned); i++ {
+			if solution.Assigned[i] {
 				fmt.Print(i, " ")
 
 			} else {

@@ -13,14 +13,21 @@ func ChooseVariable(problem Problem) int {
 	return bestVariable
 }
 
-// Solve is the solver itself, takes solution spaces in pairs and combines them
-// it finds the entire solution space
+// Solve is the solver itself
 func Solve(problem Problem) Problem {
+	// This is a wrapper around solve to provide memory safety to the end user
+	return solve(problem.Copy())
+}
+
+// Solve is actually the real solver
+func solve(problem Problem) Problem {
+	// No need to create copy of problem, the caller should have done that.
+
 	// Literal elimination
 	for variable := range problem.Variables {
 		if _, exists := problem.Variables[-variable]; !exists {
 			// The other polarity does not exist, we can eliminate the literal
-			problem = problem.Assign(variable)
+			problem.Assign(variable)
 		}
 	}
 
@@ -28,7 +35,7 @@ func Solve(problem Problem) Problem {
 	for _, vrs := range problem.Clauses {
 		if len(vrs) == 1 {
 			for vr := range vrs {
-				problem = problem.Assign(vr)
+				problem.Assign(vr)
 			}
 		}
 	}
@@ -40,11 +47,19 @@ func Solve(problem Problem) Problem {
 	}
 
 	vr := ChooseVariable(problem)
-	res := Solve(problem.Assign(vr))
+
+	// The solver changes the problem directly and we need the
+	// current version if this try is unsatisfiable.
+	firstTry := problem.Copy()
+
+	firstTry.Assign(vr)
+	res := Solve(firstTry)
 
 	if !res.Unsatisfiable {
 		return res
 	}
 
-	return Solve(problem.Assign(-vr))
+	// No need to create a copy, we'll never use problem again
+	problem.Assign(-vr)
+	return Solve(problem)
 }

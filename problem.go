@@ -10,8 +10,8 @@ type Problem struct {
 	// Mapping from a variable phase to the clauses containing it
 	Variables map[int]map[uint]bool
 
-	// Mapping of a variable to it's current assignment
-	Assignment map[int]bool
+	// Set of assignments
+	Assigned map[int]bool
 
 	// A flag showing wheither the current assignment is UNSAT
 	Unsatisfiable bool
@@ -22,7 +22,7 @@ func NewProblem() Problem {
 	return Problem{
 		Clauses:       map[uint]map[int]bool{},
 		Variables:     map[int]map[uint]bool{},
-		Assignment:    map[int]bool{},
+		Assigned:      map[int]bool{},
 		Unsatisfiable: false,
 	}
 }
@@ -64,61 +64,57 @@ func (p *Problem) AddClause(clause []int) {
 // Assign variable false if negative, true if positive, removing the variable
 // from all lists and adding the assignment to the Assignment map.
 // If the assignment results in a conflict the Unsatisfiable flag is set.
-func (p Problem) Assign(variable int) Problem {
-	np := p.Copy()
-
+func (p *Problem) Assign(variable int) {
 	// Save the variables assignment
-	np.Assignment[abs(variable)] = variable > 0
+	p.Assigned[variable] = true
 
 	// Remove all instances of this phase
 	// If the clause contains the current assignment, we remove the clause.
-	for clause := range np.Variables[variable] {
-		if len(np.Clauses[clause]) == 1 {
+	for clause := range p.Variables[variable] {
+		if len(p.Clauses[clause]) == 1 {
 			// No need to update other variables, there are none.
 			// So just remove the clause
-			delete(np.Clauses, clause)
+			delete(p.Clauses, clause)
 			continue
 		}
 
 		// We make the clause true so:
 		// Delete all references to this clause...
-		for vr := range np.Clauses[clause] {
+		for vr := range p.Clauses[clause] {
 			// If the variable phase only appeared here,
 			// remove the variable phase
-			if len(np.Variables[vr]) == 1 {
-				delete(np.Variables, vr)
+			if len(p.Variables[vr]) == 1 {
+				delete(p.Variables, vr)
 
 			} else {
-				delete(np.Variables[vr], clause)
+				delete(p.Variables[vr], clause)
 			}
 		}
 
 		// ...and delete the clause itself
-		delete(np.Clauses, clause)
+		delete(p.Clauses, clause)
 	}
 
 	// Remove all instances of the other phase
-	for clause := range np.Variables[-variable] {
+	for clause := range p.Variables[-variable] {
 		// We have unsatisfiability if the opposite phase is required
-		if len(np.Clauses[clause]) == 1 {
-			np.Unsatisfiable = true
+		if len(p.Clauses[clause]) == 1 {
+			p.Unsatisfiable = true
 
 			// This was the only variable in the clause,
 			// remove the clause and continue
-			delete(np.Clauses, clause)
+			delete(p.Clauses, clause)
 			continue
 		}
 
 		// There are other variables in the clause
 		// only remove this phase
-		delete(np.Clauses[clause], -variable)
+		delete(p.Clauses[clause], -variable)
 	}
 
 	// Remove the variable instances
-	delete(np.Variables, variable)
-	delete(np.Variables, -variable)
-
-	return np
+	delete(p.Variables, variable)
+	delete(p.Variables, -variable)
 }
 
 // Copy creates a copy of the Problem
@@ -141,8 +137,8 @@ func (p Problem) Copy() Problem {
 		}
 	}
 
-	for vr, vl := range p.Assignment {
-		np.Assignment[vr] = vl
+	for vr := range p.Assigned {
+		np.Assigned[vr] = true
 	}
 
 	np.Unsatisfiable = p.Unsatisfiable
