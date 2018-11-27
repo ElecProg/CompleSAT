@@ -32,11 +32,9 @@ func solve(problem *Problem) *Problem {
 	}
 
 	// Unit propagation
-	for _, vrs := range problem.Clauses {
-		if len(vrs) == 1 {
-			for vr := range vrs {
-				problem.Assign(vr)
-			}
+	for !problem.Unsatisfiable && len(problem.Units) > 0 {
+		for unit := range problem.Units {
+			problem.Assign(unit)
 		}
 	}
 

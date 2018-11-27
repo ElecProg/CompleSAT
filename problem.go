@@ -10,6 +10,9 @@ type Problem struct {
 	// Mapping from a variable phase to the clauses containing it
 	Variables map[int]map[uint]bool
 
+	// Set of variable phases which are in a unit clause
+	Units map[int]bool
+
 	// Set of assignments
 	Assigned map[int]bool
 
@@ -22,6 +25,7 @@ func NewProblem() *Problem {
 	return &Problem{
 		Clauses:       map[uint]map[int]bool{},
 		Variables:     map[int]map[uint]bool{},
+		Units:         map[int]bool{},
 		Assigned:      map[int]bool{},
 		Unsatisfiable: false,
 	}
@@ -54,6 +58,14 @@ func (p *Problem) AddClause(clause map[int]bool) {
 
 		p.Variables[vr][id] = true
 	}
+
+	// If we added a unit clause,
+	// add the variable to the Units set.
+	if len(clause) == 1 {
+		for vr := range clause {
+			p.Units[vr] = true
+		}
+	}
 }
 
 // Assign variable false if negative, true if positive, removing the variable
@@ -68,8 +80,10 @@ func (p *Problem) Assign(variable int) {
 	for clause := range p.Variables[variable] {
 		if len(p.Clauses[clause]) == 1 {
 			// No need to update other variables, there are none.
-			// So just remove the clause
+			// So just remove the clause, and remove the variable
+			// from the Units set.
 			delete(p.Clauses, clause)
+			delete(p.Units, variable)
 			continue
 		}
 
@@ -105,6 +119,13 @@ func (p *Problem) Assign(variable int) {
 		// There are other variables in the clause
 		// only remove this phase
 		delete(p.Clauses[clause], -variable)
+
+		// Has the clause become a unit clause?
+		if len(p.Clauses[clause]) == 1 {
+			for vr := range p.Clauses[clause] {
+				p.Units[vr] = true
+			}
+		}
 	}
 
 	// Remove the variable instances
@@ -130,6 +151,10 @@ func (p *Problem) Copy() *Problem {
 		for clause := range clauses {
 			np.Variables[vr][clause] = true
 		}
+	}
+
+	for vr := range p.Units {
+		np.Units[vr] = true
 	}
 
 	for vr := range p.Assigned {
