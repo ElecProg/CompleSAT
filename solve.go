@@ -13,14 +13,9 @@ func ChooseVariable(problem *Problem) int {
 	return bestVariable
 }
 
-// Solve is the solver itself
+// Solve is the solver itself, this modifies the given problem
 func Solve(problem *Problem) *Problem {
-	// This is a wrapper around solve to provide memory safety to the end user
-	return solve(problem.Copy())
-}
 
-// Solve is actually the real solver
-func solve(problem *Problem) *Problem {
 	// The solving is in a loop as we have a tail call.
 	for {
 		// No need to create copy of problem, the caller should have done that.
@@ -53,7 +48,7 @@ func solve(problem *Problem) *Problem {
 		firstTry := problem.Copy()
 
 		firstTry.Assign(vr)
-		res := solve(firstTry)
+		res := Solve(firstTry)
 
 		if !res.Unsatisfiable {
 			return res
