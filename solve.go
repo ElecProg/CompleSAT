@@ -20,18 +20,18 @@ func Solve(problem *Problem) *Problem {
 	for {
 		// No need to create copy of problem, the caller should have done that.
 
+		// Unit propagation
+		for !problem.Unsatisfiable && len(problem.Units) > 0 {
+			for unit := range problem.Units {
+				problem.Assign(unit)
+			}
+		}
+
 		// Literal elimination
 		for variable := range problem.Variables {
 			if _, exists := problem.Variables[-variable]; !exists {
 				// The other polarity does not exist, we can eliminate the literal
 				problem.Assign(variable)
-			}
-		}
-
-		// Unit propagation
-		for !problem.Unsatisfiable && len(problem.Units) > 0 {
-			for unit := range problem.Units {
-				problem.Assign(unit)
 			}
 		}
 
@@ -57,6 +57,6 @@ func Solve(problem *Problem) *Problem {
 		// No need to create a copy, we'll never use problem again.
 		problem.Assign(-vr)
 
-		// We jump back up effectivively 'tail calling' Solve.
+		// We jump back up, effectivively 'tail calling' Solve.
 	}
 }
